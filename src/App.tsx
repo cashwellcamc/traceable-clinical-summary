@@ -25,17 +25,27 @@ Rules:
 
 type SummaryState =
   | { status: 'loading' }
-  | { status: 'success'; summary: AISummary }
+  | { status: 'success'; summary: AISummary; mock?: boolean }
   | { status: 'error'; message: string };
 
 export default function App() {
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus>(mockPatient.reviewStatus);
   const [summaryState, setSummaryState] = useState<SummaryState>({ status: 'loading' });
+  const [reviewAnnouncement, setReviewAnnouncement] = useState('');
+
+  const handleReviewChange = (status: ReviewStatus) => {
+    setReviewStatus(status);
+    setReviewAnnouncement(
+      status.state === 'reviewed'
+        ? `Summary marked as reviewed by ${(status as Extract<ReviewStatus, { state: 'reviewed' }>).reviewerName}`
+        : 'Summary marked as unreviewed'
+    );
+  };
 
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
     if (!apiKey) {
-      setSummaryState({ status: 'success', summary: mockPatient.summary });
+      setSummaryState({ status: 'success', summary: mockPatient.summary, mock: true });
       return;
     }
 
@@ -60,7 +70,7 @@ export default function App() {
         });
       })
       .catch(() => {
-        setSummaryState({ status: 'success', summary: mockPatient.summary });
+        setSummaryState({ status: 'success', summary: mockPatient.summary, mock: true });
       });
   }, []);
 
@@ -93,7 +103,7 @@ export default function App() {
         </div>
         <div className="app-header__title">
           <h1>Clinical Data Viewer</h1>
-          <span className="app-header__subtitle">Federal Health System — EHR Prototype</span>
+          <span className="app-header__subtitle">Clinical Data Viewer — Demo</span>
         </div>
       </header>
 
@@ -114,7 +124,7 @@ export default function App() {
               </div>
             </dl>
           </div>
-          <ReviewStatusBadge status={reviewStatus} onStatusChange={setReviewStatus} />
+          <ReviewStatusBadge status={reviewStatus} onStatusChange={handleReviewChange} />
         </div>
 
         {summaryState.status === 'loading' && (
@@ -129,10 +139,26 @@ export default function App() {
           </div>
         )}
 
+        {summaryState.status === 'success' && summaryState.mock && (
+          <div className="ai-unavailable" role="note" aria-label="AI model status">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span><strong>Demo mode:</strong> Showing pre-generated example summary. AI model not connected.</span>
+          </div>
+        )}
+
         {summaryState.status === 'success' && (
           <SummaryCard summary={summaryState.summary} sources={mockPatient.sources} />
         )}
       </main>
+
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {reviewAnnouncement}
+      </div>
 
       <footer className="app-footer" role="contentinfo">
         <p>

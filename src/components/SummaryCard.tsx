@@ -37,14 +37,14 @@ export default function SummaryCard({ summary, sources }: Props) {
       return <span key={i}>{seg.content}</span>;
     }
     const num = sourceIndex[seg.sourceId];
+    const sourceLabel = sources.find((s) => s.id === seg.sourceId)?.label ?? 'Unknown source';
     return (
       <span key={i} className="cited-span">
         {seg.content}
         <button
           className="citation-btn"
           onClick={() => scrollToSource(seg.sourceId)}
-          aria-label={`Citation ${num}: view source — ${sources.find((s) => s.id === seg.sourceId)?.label}`}
-          title={`Source [${num}]: ${sources.find((s) => s.id === seg.sourceId)?.label}`}
+          aria-label={`Source ${num}: ${sourceLabel}`}
         >
           <sup aria-hidden="true">[{num}]</sup>
         </button>
@@ -61,9 +61,9 @@ export default function SummaryCard({ summary, sources }: Props) {
   });
 
   return (
-    <section className="summary-card" aria-label="AI-generated patient summary, verify against source documents">
+    <section className="summary-card" aria-labelledby="ai-summary-heading">
       <header className="summary-card__header">
-        <div className="ai-badge" role="note" aria-label="This content is AI-generated">
+        <div className="ai-badge" id="ai-summary-heading" role="heading" aria-level={3}>
           <svg
             className="ai-badge__icon"
             width="16"

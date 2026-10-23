@@ -74,7 +74,7 @@ export const mockPatient: PatientRecord = {
       id: 'med-list-2026',
       label: 'Medication Reconciliation',
       date: '2026-09-01',
-      author: 'Clinical Pharmacy, Bay Pines Medical Center',
+      author: 'Clinical Pharmacy, Riverside Regional Medical Center',
       excerpt:
         'Active medications as of 09/01/2026: Metformin HCl 1000 mg PO BID, Carvedilol 25 mg PO BID, Lisinopril 10 mg PO daily, Atorvastatin 40 mg PO nightly, Furosemide 40 mg PO daily. Allergies: NKDA (No Known Drug Allergies). No contraindications identified in current formulary review.',
     },

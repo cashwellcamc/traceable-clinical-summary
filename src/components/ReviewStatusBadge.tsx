@@ -57,7 +57,6 @@ export default function ReviewStatusBadge({ status, onStatusChange }: Props) {
         <button
           className="review-btn"
           onClick={handleToggle}
-          aria-label={isReviewed ? 'Mark summary as unreviewed' : 'Mark summary as reviewed'}
         >
           {isReviewed ? 'Revoke Review' : 'Mark as Reviewed'}
         </button>

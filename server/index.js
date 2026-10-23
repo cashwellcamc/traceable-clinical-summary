@@ -58,7 +58,7 @@ app.post('/api/summary', async (req, res) => {
   } catch (err) {
     console.error('Gemini API error:', err);
     if (err.status === 429) {
-      return res.status(429).json({ error: 'Rate limit reached. The free tier allows 20 requests/day. Try again tomorrow or upgrade your API plan.' });
+      return res.status(200).json({ rateLimited: true });
     }
     res.status(500).json({ error: 'Failed to generate summary' });
   }
