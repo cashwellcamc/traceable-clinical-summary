@@ -1,27 +1,10 @@
 import { useState, useEffect } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { mockPatient } from './mockData';
 import type { AISummary, ReviewStatus } from './types';
 import SummaryCard from './components/SummaryCard';
 import ReviewStatusBadge from './components/ReviewStatusBadge';
 import './App.css';
 
-const SYSTEM_PROMPT = `You are a clinical AI assistant. Given source documents from a patient's medical record, generate a concise clinical summary.
-
-Return ONLY a JSON object — no markdown, no explanation — with this exact structure:
-{
-  "segments": [
-    { "kind": "cited", "content": "...", "sourceId": "..." },
-    { "kind": "text", "content": ". " }
-  ]
-}
-
-Rules:
-- Every factual claim must be a "cited" segment with the sourceId of the supporting document
-- Use "kind": "text" segments only for punctuation/connectors (". ", ", ", " and ", etc.)
-- sourceId must exactly match one of the provided document IDs
-- Do not fabricate any information not found in the source documents
-- Be concise and clinically precise`;
 
 type SummaryState =
   | { status: 'loading' }
@@ -43,31 +26,26 @@ export default function App() {
   };
 
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
-    if (!apiKey) {
-      setSummaryState({ status: 'success', summary: mockPatient.summary, mock: true });
-      return;
-    }
+    const apiUrl = import.meta.env.VITE_API_URL as string;
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3.6-flash',
-      systemInstruction: SYSTEM_PROMPT,
-      generationConfig: { responseMimeType: 'application/json' },
-    });
-
-    const sourceContext = mockPatient.sources
-      .map((s) => `Document ID: ${s.id}\nType: ${s.label}\nDate: ${s.date}\nAuthor: ${s.author}\nContent:\n${s.excerpt}`)
-      .join('\n\n---\n\n');
-
-    model
-      .generateContent(`Patient: ${mockPatient.patientName}\n\nSource documents:\n\n${sourceContext}\n\nGenerate a clinical summary JSON.`)
-      .then((result) => {
-        const parsed = JSON.parse(result.response.text());
-        setSummaryState({
-          status: 'success',
-          summary: { segments: parsed.segments, generatedAt: new Date().toISOString(), modelVersion: 'gemini-3.6-flash' },
-        });
+    fetch(apiUrl || 'https://traceable-clinical-summary.vercel.app/api/summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientName: mockPatient.patientName,
+        sources: mockPatient.sources,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server error ${res.status}`);
+        return res.json();
+      })
+      .then((data: AISummary & { rateLimited?: boolean }) => {
+        if (data.rateLimited) {
+          setSummaryState({ status: 'success', summary: mockPatient.summary, mock: true });
+        } else {
+          setSummaryState({ status: 'success', summary: data });
+        }
       })
       .catch(() => {
         setSummaryState({ status: 'success', summary: mockPatient.summary, mock: true });
